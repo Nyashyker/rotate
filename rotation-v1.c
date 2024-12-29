@@ -1,47 +1,56 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #define BOX_SIZE 12
 
-enum Vector {
+
+typedef enum {
     UP,//    = -1,
     RIGHT,// = +1,
     LEFT,//  = -1,
     DOWN,//  = +1,
-};
+} Vector;
 
-struct Cords {
+typedef struct {
     unsigned int x;
     unsigned int y;
-};
+    bool valid;
+} Cords;
 
-void show_matrix(struct Cords* buffer, const unsigned int max_box_size);
-struct Cords* clockwise_expanding_spiral_cords(struct Cords* buffer, const unsigned int max_box_size);
+
+
+void show_matrix(const Cords *const buffer, const unsigned int max_box_size);
+Cords* clockwise_expanding_spiral_cords(Cords *const buffer, const unsigned int max_box_size);
+
 
 int main(int argc, char **argv)
 {
-    struct Cords* rez_buf = calloc(BOX_SIZE * BOX_SIZE, sizeof(struct Cords));
+    Cords* rez_buf = calloc(BOX_SIZE * BOX_SIZE, sizeof(Cords));
     printf("Буфер виділився:\n");
     show_matrix(rez_buf, BOX_SIZE);
+
     clockwise_expanding_spiral_cords(rez_buf, BOX_SIZE);
     printf("Функція спрацювала...\n");
-    printf("---\n");
+
+    for (int i = 0; i < BOX_SIZE * 8 - 5; i++) { printf("-"); } printf("\n");
     show_matrix(rez_buf, BOX_SIZE);
-    printf("---\n");
+    for (int i = 0; i < BOX_SIZE * 8 - 5; i++) { printf("-"); } printf("\n");
     printf("Матриця успішно вивелася!\n");
     printf("Програму завершено)\n");
 
     return 0;
 }
 
-struct Cords* clockwise_expanding_spiral_cords(struct Cords* buffer, const unsigned int max_box_size)
+
+Cords* clockwise_expanding_spiral_cords(Cords *const buffer, const unsigned int max_box_size)
 {
     const unsigned int center = max_box_size / 2;
 
-    struct Cords position = {center, center};
+    Cords position = {center, center, true};
 
     // Стан руху по уявному квадрату із центру
-    enum Vector state = DOWN;
+    Vector state = DOWN;
     // розмір сторони квадрату (менша половина)
     unsigned int imagine_matrix_size = 1;
 
@@ -51,6 +60,11 @@ struct Cords* clockwise_expanding_spiral_cords(struct Cords* buffer, const unsig
 
     for (size_t i = 1; i < max_box_size * max_box_size; i++)
     {
+        // Не даємо вийти за межі діапазону
+        if (imagine_matrix_size >= center) {
+            break;
+        }
+
         buffer[i] = position;
 
         switch (state)
@@ -93,32 +107,25 @@ struct Cords* clockwise_expanding_spiral_cords(struct Cords* buffer, const unsig
         break;
         }
 
-        // Не даємо вийти за межі діапазону
-        if (imagine_matrix_size >= center) {
-            break;
-        }
     }
 
     return buffer;
 }
 
-void show_matrix(struct Cords* buffer, const unsigned int max_box_size)
-{
-    // ХЗ як це по-людськи зробити
-    int matrix[BOX_SIZE][BOX_SIZE] = {};
 
-    // Так, воно спамить у нульову комірку
-    // якщо не весь буфер ще містить щось змістовне
-    // Але для моєї задачі це задовільно
-    // Тож і фіг із ним
-    for (size_t i = 0; i < max_box_size*max_box_size; i++){
-        const struct Cords cords = buffer[i];
-        matrix[cords.y][cords.x] = i + 1;
+void show_matrix(const Cords *const buffer, const unsigned int max_box_size)
+{
+    unsigned int *const matrix = calloc(max_box_size * max_box_size, sizeof(unsigned int));
+
+    for (size_t i = 0; i < max_box_size * max_box_size; i++){
+        const Cords cords = buffer[i];
+        if (!cords.valid) { break; }
+        matrix[cords.y * max_box_size + cords.x] = i + 1;
     }
 
     for (unsigned int y = 0; y < max_box_size; y++) {
         for (unsigned int x = 0; x < max_box_size; x++) {
-            printf("%03d\t", matrix[y][x]);
+            printf("%03d\t", matrix[y * max_box_size + x]);
         }
         printf("\n");
     }
