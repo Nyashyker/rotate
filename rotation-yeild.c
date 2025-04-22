@@ -5,6 +5,7 @@
 #include <math.h>
 
 #define null (void *)0
+#define DEBUG
 
 typedef enum {
     UP,
@@ -47,9 +48,15 @@ int main(int argc, char **argv)
         printf("Уведіть розмір сітки: ");
         if (scanf("%iu", &box_size) != 1) { goto standard_size; }
     } else {
-standard_size:
+    standard_size:
         box_size = 13;
     }
+
+
+#ifdef DEBUG
+    Coordinates* rez_buf_test = calloc(box_size * box_size, sizeof(Coordinates));
+    clockwiseExpandingSpiralCords(rez_buf_test, box_size);
+#endif
 
 
     Yeild *const yeild_buf = (Yeild*)malloc(sizeof(Yeild));
@@ -59,14 +66,20 @@ standard_size:
     unsigned int n = 0U;
     while (x_y != NULL)
     {
+#ifdef DEBUG
+        const Coordinates cell = rez_buf_test[n];
+        if (cell.x != x_y->x && cell.y != x_y->y) {
+            fprintf(stderr, "Клітинка %ix%i генерується неправильно, натомість маємо %ix%i\n", cell.x, cell.y, x_y->x, x_y->y);
+        }
+#endif
         rez_buf[n] = *x_y;
         x_y = ClockwiseExpandingSpiralGenerator(yeild_buf);
         n++;
     }
+#ifdef DEBUG
+    free(rez_buf_test);
+#endif
     free(yeild_buf);
-
-
-    //clockwiseExpandingSpiralCords(rez_buf, box_size);
 
 
     showMatrix(rez_buf, box_size);
@@ -147,9 +160,9 @@ Coordinates* clockwiseExpandingSpiralCords(Coordinates *const buffer, const unsi
 
 Coordinates* prepareBuffer4ClockwiseExpandingSpiralGenerator(Yeild *const buffer, const unsigned int max_box_size)
 {
-    const unsigned int center = max_box_size / 2;
+    const unsigned int center = max_box_size / 2 - !(max_box_size % 2);
 
-    buffer->position = (Coordinates){center, center};
+    buffer->position = (Coordinates){center, center, true};
     buffer->max_quadrate_size = max_box_size;
     buffer->move = (Coordinates){1, 0};
     buffer->quadrate_radius = 0U;
@@ -180,7 +193,7 @@ Coordinates* ClockwiseExpandingSpiralGenerator(Yeild *const buffer)
             // лівий нижній кут уявного квадрату
             buffer->position.y - buffer->position.x == buffer->quadrate_radius * 2
         ) {
-rotate:
+    rotate:;
             const unsigned int tmp = buffer->move.x;
             buffer->move.x = -buffer->move.y;
             buffer->move.y = tmp;
