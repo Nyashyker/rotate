@@ -5,7 +5,7 @@
 #include <math.h>
 
 #define null (void *)0
-#define DEBUG
+//#define DEBUG
 
 typedef enum {
     UP,
@@ -54,8 +54,9 @@ int main(int argc, char **argv)
 
 
 #ifdef DEBUG
-    Coordinates* rez_buf_test = calloc(box_size * box_size, sizeof(Coordinates));
+    Coordinates *const rez_buf_test = calloc(box_size * box_size, sizeof(Coordinates));
     clockwiseExpandingSpiralCords(rez_buf_test, box_size);
+    showMatrix(rez_buf_test, box_size);
 #endif
 
 
@@ -102,7 +103,7 @@ char* moveState2Str(const Vector move_state)
 
 Coordinates* clockwiseExpandingSpiralCords(Coordinates *const buffer, const unsigned int max_box_size)
 {
-    const long center = max_box_size / 2 - !(max_box_size % 2);
+    const unsigned int center = max_box_size / 2;
 
     Coordinates position = {center, center, true};
     Vector move_state = UP;
@@ -110,7 +111,14 @@ Coordinates* clockwiseExpandingSpiralCords(Coordinates *const buffer, const unsi
 
     for (size_t i = 0; i < max_box_size * max_box_size; i++)
     {
-        buffer[i] = position;
+        if (
+            position.x < max_box_size
+            && position.y < max_box_size
+        ) {
+            buffer[i] = position;
+        } else {
+            i--;
+        }
 
         switch (move_state)
         {
@@ -160,7 +168,7 @@ Coordinates* clockwiseExpandingSpiralCords(Coordinates *const buffer, const unsi
 
 Coordinates* prepareBuffer4ClockwiseExpandingSpiralGenerator(Yeild *const buffer, const unsigned int max_box_size)
 {
-    const unsigned int center = max_box_size / 2 - !(max_box_size % 2);
+    const unsigned int center = max_box_size / 2;
 
     buffer->position = (Coordinates){center, center, true};
     buffer->max_quadrate_size = max_box_size;
@@ -172,7 +180,7 @@ Coordinates* prepareBuffer4ClockwiseExpandingSpiralGenerator(Yeild *const buffer
 
 Coordinates* ClockwiseExpandingSpiralGenerator(Yeild *const buffer)
 {
-    const long center = buffer->max_quadrate_size / 2 - !(buffer->max_quadrate_size % 2);
+    const unsigned int center = buffer->max_quadrate_size / 2;
 
     while (buffer->quadrate_radius <= center)
     {
